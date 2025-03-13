@@ -1,3 +1,4 @@
+
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { School, EyeIcon, EyeOffIcon } from 'lucide-react';
@@ -6,11 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { AuthContext } from '@/App';
-import { toast } from 'sonner';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { AuthController } from '@/controllers/AuthController';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -25,54 +22,11 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const user = {
-          id: firebaseUser.uid,
-          name: userData.name || 'Usuario',
-          email: firebaseUser.email || '',
-          role: userData.role as 'admin' | 'coordinator'
-        };
-        
-        setUser(user);
-        toast.success('Inicio de sesión exitoso');
+      const success = await AuthController.login(email, password, setUser);
+      if (success) {
         navigate('/select-role');
-      } else {
-        toast.error('No se encontró información del usuario');
-        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error en inicio de sesión:", error);
-      
-      if (email === 'admin@example.com' && password === 'password') {
-        const user = {
-          id: '1',
-          name: 'Administrador',
-          email: 'admin@example.com',
-          role: 'admin' as const
-        };
-        setUser(user);
-        toast.success('Inicio de sesión exitoso (modo demo)');
-        navigate('/select-role');
-      } else if (email === 'coordinator@example.com' && password === 'password') {
-        const user = {
-          id: '2',
-          name: 'Coordinador',
-          email: 'coordinator@example.com',
-          role: 'coordinator' as const
-        };
-        setUser(user);
-        toast.success('Inicio de sesión exitoso (modo demo)');
-        navigate('/select-role');
-      } else {
-        toast.error('Credenciales incorrectas');
-      }
-      
+    } finally {
       setIsLoading(false);
     }
   };
