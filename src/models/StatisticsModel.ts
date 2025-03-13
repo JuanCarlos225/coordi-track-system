@@ -1,5 +1,5 @@
 
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, Query, DocumentData, CollectionReference } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 
 export interface AttendanceData {
@@ -34,10 +34,12 @@ export class StatisticsModel {
     try {
       // Aquí iría la lógica para obtener datos de Firebase
       const attendanceCollection = collection(db, "attendance");
-      let q = attendanceCollection;
+      let q: Query<DocumentData>;
       
       if (carrera && carrera !== 'todas') {
         q = query(attendanceCollection, where("carrera", "==", carrera));
+      } else {
+        q = attendanceCollection;
       }
       
       const querySnapshot = await getDocs(q);
